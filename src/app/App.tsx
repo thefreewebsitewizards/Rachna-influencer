@@ -8,6 +8,7 @@ import { CollaborationSection } from './components/CollaborationSection';
 import { Footer } from './components/Footer';
 import { Navigation } from './components/Navigation';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from './components/ui/alert-dialog';
 import { Input } from './components/ui/input';
 import { Textarea } from './components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
@@ -83,6 +84,7 @@ type ContactFormValues = {
 function ContactDialog({ open, intent, onOpenChange }: ContactDialogProps) {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [tab, setTab] = useState<'collaboration' | 'media-kit' | 'general'>(intent);
+  const [successOpen, setSuccessOpen] = useState(false);
   const { register, handleSubmit, reset, setValue, formState: { errors, isValid } } = useForm<ContactFormValues>({
     mode: 'onChange',
     defaultValues: {
@@ -99,6 +101,7 @@ function ContactDialog({ open, intent, onOpenChange }: ContactDialogProps) {
     if (open) {
       setTab(intent);
       setStatus('idle');
+      setSuccessOpen(false);
     } else {
       reset();
       setStatus('idle');
@@ -138,6 +141,8 @@ function ContactDialog({ open, intent, onOpenChange }: ContactDialogProps) {
       ]);
 
       setStatus('success');
+      setSuccessOpen(true);
+      onOpenChange(false);
     } catch {
       setStatus('error');
     }
@@ -146,46 +151,41 @@ function ContactDialog({ open, intent, onOpenChange }: ContactDialogProps) {
   const isSubmitting = status === 'submitting';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#0f0f0f] border border-[#D4AF37]/30 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="space-y-3">
-          <DialogTitle className="text-2xl font-bold">
-            {tab === 'media-kit' ? 'Request the Media Kit' : 'Start a Collaboration'}
-          </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            {tab === 'media-kit'
-              ? 'Receive the latest media kit with analytics, rates, and recent case studies.'
-              : 'Share a few details so we can respond with a tailored collaboration plan.'}
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="bg-[#0f0f0f] border border-[#D4AF37]/30 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-2xl font-bold">
+              {tab === 'media-kit' ? 'Request the Media Kit' : 'Start a Collaboration'}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {tab === 'media-kit'
+                ? 'Receive the latest media kit with analytics, rates, and recent case studies.'
+                : 'Share a few details so we can respond with a tailored collaboration plan.'}
+            </DialogDescription>
+          </DialogHeader>
 
-        <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="mt-2">
-          <TabsList className="bg-[#1a1a1a] border border-[#D4AF37]/20 rounded-full w-full sm:w-auto">
-            <TabsTrigger value="collaboration" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#101010] rounded-full px-4">
-              Collaboration
-            </TabsTrigger>
-            <TabsTrigger value="media-kit" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#101010] rounded-full px-4">
-              Media Kit
-            </TabsTrigger>
-            <TabsTrigger value="general" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#101010] rounded-full px-4">
-              General
-            </TabsTrigger>
-          </TabsList>
+          <Tabs value={tab} onValueChange={(value) => setTab(value as typeof tab)} className="mt-2">
+            <TabsList className="bg-[#1a1a1a] border border-[#D4AF37]/20 rounded-full w-full sm:w-auto">
+              <TabsTrigger value="collaboration" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#101010] rounded-full px-4">
+                Collaboration
+              </TabsTrigger>
+              <TabsTrigger value="media-kit" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#101010] rounded-full px-4">
+                Media Kit
+              </TabsTrigger>
+              <TabsTrigger value="general" className="data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#101010] rounded-full px-4">
+                General
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value={tab} className="mt-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              {status === 'success' && (
-                <div className="flex items-center gap-3 rounded-2xl border border-[#D4AF37]/40 bg-[#1a1a1a] px-4 py-3 text-sm text-[#F3E5AB]">
-                  <CheckCircle2 className="h-5 w-5" />
-                  Submission received. We will follow up within 24 hours.
-                </div>
-              )}
-              {status === 'error' && (
-                <div className="flex items-center gap-3 rounded-2xl border border-red-500/40 bg-[#1a1a1a] px-4 py-3 text-sm text-red-200">
-                  <AlertTriangle className="h-5 w-5" />
-                  Submission failed. Please double-check the email address and try again.
-                </div>
-              )}
+            <TabsContent value={tab} className="mt-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                {status === 'error' && (
+                  <div className="flex items-center gap-3 rounded-2xl border border-red-500/40 bg-[#1a1a1a] px-4 py-3 text-sm text-red-200">
+                    <AlertTriangle className="h-5 w-5" />
+                    Submission failed. Please double-check the email address and try again.
+                  </div>
+                )}
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -316,9 +316,9 @@ function ContactDialog({ open, intent, onOpenChange }: ContactDialogProps) {
                   {isSubmitting ? 'Submitting...' : 'Submit request'}
                 </button>
               </div>
-            </form>
-          </TabsContent>
-        </Tabs>
+              </form>
+            </TabsContent>
+          </Tabs>
 
         <div className="mt-8 border-t border-[#D4AF37]/20 pt-6">
           <Accordion type="single" collapsible className="text-sm text-gray-300">
@@ -342,8 +342,28 @@ function ContactDialog({ open, intent, onOpenChange }: ContactDialogProps) {
             </AccordionItem>
           </Accordion>
         </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={successOpen} onOpenChange={setSuccessOpen}>
+        <AlertDialogContent className="bg-[#0f0f0f] border border-[#D4AF37]/30 text-white">
+          <AlertDialogHeader className="space-y-3">
+            <AlertDialogTitle className="text-2xl font-bold flex items-center gap-3">
+              <CheckCircle2 className="h-6 w-6 text-[#D4AF37]" />
+              Request sent
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Thanks! Your request has been submitted successfully. A confirmation email has been sent to your inbox.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="pt-2 flex justify-end">
+            <AlertDialogAction className="px-8 py-3 bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-[#101010] font-semibold rounded-full">
+              Done
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
