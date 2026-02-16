@@ -19,11 +19,22 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from 
 import { Switch } from './components/ui/switch';
 import { useForm } from 'react-hook-form';
 import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Filter, Info, MoreHorizontal } from 'lucide-react';
+import emailjs from '@emailjs/browser';
+
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_OWNER = import.meta.env.VITE_EMAILJS_TEMPLATE_OWNER;
+const EMAILJS_TEMPLATE_CONFIRMATION = import.meta.env.VITE_EMAILJS_TEMPLATE_CONFIRMATION;
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
 export default function App() {
   const [contactOpen, setContactOpen] = useState(false);
   const [portfolioOpen, setPortfolioOpen] = useState(false);
   const [contactIntent, setContactIntent] = useState<'collaboration' | 'media-kit' | 'general'>('collaboration');
+
+  useEffect(() => {
+    if (!EMAILJS_PUBLIC_KEY) return;
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY, blockHeadless: true });
+  }, []);
 
   const openContact = (intent: 'collaboration' | 'media-kit' | 'general') => {
     setContactIntent(intent);
@@ -94,15 +105,42 @@ function ContactDialog({ open, intent, onOpenChange }: ContactDialogProps) {
     }
   }, [intent, open, reset]);
 
-  const onSubmit = (values: ContactFormValues) => {
+  const onSubmit = async (values: ContactFormValues) => {
     setStatus('submitting');
-    window.setTimeout(() => {
-      if (values.email.trim().endsWith('@fail.com') || values.message.toLowerCase().includes('fail')) {
+    try {
+      if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_OWNER || !EMAILJS_TEMPLATE_CONFIRMATION || !EMAILJS_PUBLIC_KEY) {
         setStatus('error');
         return;
       }
+
+      const submittedAt = new Date().toISOString();
+      const commonParams = {
+        name: values.name,
+        email: values.email,
+        brand: values.brand,
+        budget: values.budget,
+        timeline: values.timeline,
+        message: values.message,
+        intent: tab,
+        submitted_at: submittedAt,
+        from_name: values.name,
+        from_email: values.email,
+        reply_to: values.email,
+        user_name: values.name,
+        user_email: values.email,
+        to_name: values.name,
+        to_email: values.email,
+      };
+
+      await Promise.all([
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_OWNER, commonParams, { publicKey: EMAILJS_PUBLIC_KEY }),
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CONFIRMATION, commonParams, { publicKey: EMAILJS_PUBLIC_KEY }),
+      ]);
+
       setStatus('success');
-    }, 900);
+    } catch {
+      setStatus('error');
+    }
   };
 
   const isSubmitting = status === 'submitting';
