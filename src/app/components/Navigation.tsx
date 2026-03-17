@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Sparkles } from 'lucide-react';
+import { Menu, X, Sparkles, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function Navigation() {
@@ -28,6 +28,11 @@ export function Navigation() {
     { label: 'Partners', id: 'partners' },
     { label: 'Collaborate', id: 'collaborate' },
   ];
+
+  const goToAdmin = () => {
+    window.location.hash = 'admin';
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <>
@@ -82,8 +87,17 @@ export function Navigation() {
               ))}
             </div>
 
-            {/* CTA Button */}
-            <div className="hidden lg:block">
+            <div className="hidden lg:flex items-center gap-4">
+              <motion.button
+                onClick={goToAdmin}
+                className="p-2 rounded-full border border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Admin settings"
+                title="Admin settings"
+              >
+                <Settings className="w-5 h-5" />
+              </motion.button>
               <motion.button
                 onClick={() => scrollToSection('collaborate')}
                 className="relative px-6 py-2.5 bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-[#101010] font-semibold rounded-full overflow-hidden group"
@@ -159,6 +173,13 @@ export function Navigation() {
                 </div>
 
                 <div className="mt-8">
+                  <button
+                    onClick={goToAdmin}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3 border border-[#D4AF37]/40 text-[#D4AF37] font-semibold rounded-full mb-3"
+                  >
+                    <Settings size={18} />
+                    Admin
+                  </button>
                   <button
                     onClick={() => scrollToSection('collaborate')}
                     className="w-full px-6 py-3 bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-[#101010] font-semibold rounded-full"

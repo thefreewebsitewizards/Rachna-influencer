@@ -1,4 +1,9 @@
-export function BrandPartners() {
+type BrandStats = {
+  partnershipsCount: string;
+  partnershipsLabel: string;
+};
+
+export function BrandPartners({ stats }: { stats: BrandStats }) {
   const brandCategories = [
     {
       category: 'Fashion & Lifestyle',
@@ -40,7 +45,7 @@ export function BrandPartners() {
           </h2>
           
           <p className="text-lg text-gray-400">
-            Collaborated with <span className="text-[#D4AF37] font-semibold">1000+ global brands</span> across multiple industries
+            Collaborated with <span className="text-[#D4AF37] font-semibold">{stats.partnershipsCount} global brands</span> across multiple industries
           </p>
         </div>
 
@@ -98,9 +103,9 @@ export function BrandPartners() {
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] bg-clip-text text-transparent mb-2">
-              1000+
+              {stats.partnershipsCount}
             </div>
-            <p className="text-sm text-gray-400 uppercase tracking-wider">Brand Partnerships</p>
+            <p className="text-sm text-gray-400 uppercase tracking-wider">{stats.partnershipsLabel}</p>
           </div>
           <div className="text-center">
             <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#F3E5AB] to-[#D4AF37] bg-clip-text text-transparent mb-2">

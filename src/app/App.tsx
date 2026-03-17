@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { HeroSection } from './components/HeroSection';
 import { AboutSection } from './components/AboutSection';
 import { PortfolioSection } from './components/PortfolioSection';
@@ -27,14 +28,64 @@ const EMAILJS_TEMPLATE_OWNER = import.meta.env.VITE_EMAILJS_TEMPLATE_OWNER;
 const EMAILJS_TEMPLATE_CONFIRMATION = import.meta.env.VITE_EMAILJS_TEMPLATE_CONFIRMATION;
 const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
+type SiteStats = {
+  followersCount: string;
+  followersLabel: string;
+  partnershipsCount: string;
+  partnershipsLabel: string;
+  engagementValue: string;
+  engagementLabel: string;
+};
+
+const defaultStats: SiteStats = {
+  followersCount: '300K+',
+  followersLabel: 'Engaged Followers',
+  partnershipsCount: '1000+',
+  partnershipsLabel: 'Brand Partnerships',
+  engagementValue: 'High',
+  engagementLabel: 'Engagement Rate',
+};
+
+const ADMIN_EMAIL = 'rachna@admin.com';
+const ADMIN_PASSWORD = 'rachna#123';
+const ADMIN_AUTH_KEY = 'adminAuth';
+
 export default function App() {
   const [contactOpen, setContactOpen] = useState(false);
   const [portfolioOpen, setPortfolioOpen] = useState(false);
   const [contactIntent, setContactIntent] = useState<'collaboration' | 'media-kit' | 'general'>('collaboration');
+  const [stats, setStats] = useState<SiteStats>(defaultStats);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminAuthed, setIsAdminAuthed] = useState(false);
 
   useEffect(() => {
     if (!EMAILJS_PUBLIC_KEY) return;
     emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY, blockHeadless: true });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.localStorage.getItem('siteStats');
+    if (saved) {
+      try {
+        setStats({ ...defaultStats, ...JSON.parse(saved) });
+      } catch {
+        setStats(defaultStats);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsAdminAuthed(window.localStorage.getItem(ADMIN_AUTH_KEY) === 'true');
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () => setIsAdmin(window.location.hash === '#admin');
+    update();
+    window.addEventListener('hashchange', update);
+    return () => window.removeEventListener('hashchange', update);
   }, []);
 
   const openContact = (intent: 'collaboration' | 'media-kit' | 'general') => {
@@ -42,14 +93,50 @@ export default function App() {
     setContactOpen(true);
   };
 
+  const saveStats = (next: SiteStats) => {
+    setStats(next);
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('siteStats', JSON.stringify(next));
+  };
+
+  if (isAdmin) {
+    if (!isAdminAuthed) {
+      return (
+        <AdminLogin
+          onSuccess={() => {
+            setIsAdminAuthed(true);
+            if (typeof window !== 'undefined') {
+              window.localStorage.setItem(ADMIN_AUTH_KEY, 'true');
+            }
+          }}
+        />
+      );
+    }
+
+    return (
+      <AdminPage
+        stats={stats}
+        onSave={saveStats}
+        onReset={() => saveStats(defaultStats)}
+        onLogout={() => {
+          setIsAdminAuthed(false);
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem(ADMIN_AUTH_KEY);
+            window.location.hash = '';
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#101010] overflow-x-hidden">
       <Navigation />
-      <HeroSection onCollaborateClick={() => openContact('collaboration')} />
-      <AboutSection />
+      <HeroSection onCollaborateClick={() => openContact('collaboration')} stats={stats} />
+      <AboutSection stats={stats} />
       <PortfolioSection onViewPortfolio={() => setPortfolioOpen(true)} />
-      <ValueProposition />
-      <BrandPartners />
+      <ValueProposition stats={stats} />
+      <BrandPartners stats={stats} />
       <CollaborationSection onStartCollaboration={() => openContact('collaboration')} />
       <Footer onRequestMediaKit={() => openContact('media-kit')} />
       <ContactDialog
@@ -62,6 +149,197 @@ export default function App() {
         onOpenChange={setPortfolioOpen}
         onRequestCollaboration={() => openContact('collaboration')}
       />
+    </div>
+  );
+}
+
+type AdminPageProps = {
+  stats: SiteStats;
+  onSave: (next: SiteStats) => void;
+  onReset: () => void;
+  onLogout: () => void;
+};
+
+function AdminPage({ stats, onSave, onReset, onLogout }: AdminPageProps) {
+  const [form, setForm] = useState<SiteStats>(stats);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setForm(stats);
+  }, [stats]);
+
+  const handleChange = (key: keyof SiteStats) => (event: ChangeEvent<HTMLInputElement>) => {
+    setSaved(false);
+    setForm((prev) => ({ ...prev, [key]: event.target.value }));
+  };
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    onSave(form);
+    setSaved(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#101010] text-white">
+      <div className="container mx-auto px-6 lg:px-12 py-16">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-2">
+            <p className="text-sm text-[#D4AF37] uppercase tracking-[0.3em] font-semibold">Admin</p>
+            <h1 className="text-3xl md:text-4xl font-bold">Stats Manager</h1>
+            <p className="text-gray-400 text-sm">Update values and they will reflect across the site instantly.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="inline-flex items-center justify-center px-6 py-3 rounded-full border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#101010] transition-colors"
+            >
+              Log out
+            </button>
+            <a
+              href="/"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-full border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#101010] transition-colors"
+            >
+              Back to site
+            </a>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-10 grid gap-6 rounded-3xl border border-[#D4AF37]/20 bg-[#0f0f0f] p-6 md:p-10">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">Followers count</label>
+              <Input value={form.followersCount} onChange={handleChange('followersCount')} className="bg-[#1a1a1a] border-[#D4AF37]/20 text-white" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">Followers label</label>
+              <Input value={form.followersLabel} onChange={handleChange('followersLabel')} className="bg-[#1a1a1a] border-[#D4AF37]/20 text-white" />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">Brand partnerships count</label>
+              <Input value={form.partnershipsCount} onChange={handleChange('partnershipsCount')} className="bg-[#1a1a1a] border-[#D4AF37]/20 text-white" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">Brand partnerships label</label>
+              <Input value={form.partnershipsLabel} onChange={handleChange('partnershipsLabel')} className="bg-[#1a1a1a] border-[#D4AF37]/20 text-white" />
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">Engagement value</label>
+              <Input value={form.engagementValue} onChange={handleChange('engagementValue')} className="bg-[#1a1a1a] border-[#D4AF37]/20 text-white" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">Engagement label</label>
+              <Input value={form.engagementLabel} onChange={handleChange('engagementLabel')} className="bg-[#1a1a1a] border-[#D4AF37]/20 text-white" />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="text-sm text-gray-400">
+              {saved ? 'Saved successfully.' : 'Changes are stored locally in this browser.'}
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  onReset();
+                  setSaved(true);
+                }}
+                className="px-6 py-3 rounded-full border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#101010] transition-colors"
+              >
+                Reset defaults
+              </button>
+              <button
+                type="submit"
+                className="px-8 py-3 bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-[#101010] font-semibold rounded-full"
+              >
+                Save updates
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+type AdminLoginProps = {
+  onSuccess: () => void;
+};
+
+function AdminLogin({ onSuccess }: AdminLoginProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (normalizedEmail === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      setError('');
+      onSuccess();
+      return;
+    }
+    setError('Invalid email or password.');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#101010] text-white">
+      <div className="container mx-auto px-6 lg:px-12 py-16">
+        <div className="max-w-xl mx-auto rounded-3xl border border-[#D4AF37]/20 bg-[#0f0f0f] p-8 md:p-10 space-y-6">
+          <div className="space-y-2 text-center">
+            <p className="text-sm text-[#D4AF37] uppercase tracking-[0.3em] font-semibold">Admin Access</p>
+            <h1 className="text-3xl md:text-4xl font-bold">Sign in to continue</h1>
+            <p className="text-gray-400 text-sm">Use the admin credentials to edit site stats.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">Email</label>
+              <Input
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                className="bg-[#1a1a1a] border-[#D4AF37]/20 text-white"
+                type="email"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm text-gray-300">Password</label>
+              <Input
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="bg-[#1a1a1a] border-[#D4AF37]/20 text-white"
+                type="password"
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-xl border border-red-500/40 bg-[#1a1a1a] px-4 py-3 text-sm text-red-200">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="w-full px-6 py-3 bg-gradient-to-r from-[#D4AF37] to-[#F3E5AB] text-[#101010] font-semibold rounded-full"
+            >
+              Sign in
+            </button>
+          </form>
+
+          <a
+            href="/"
+            className="block text-center text-sm text-[#D4AF37] hover:text-[#F3E5AB] transition-colors"
+          >
+            Back to site
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

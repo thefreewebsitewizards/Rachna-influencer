@@ -1,10 +1,19 @@
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
-export function AboutSection() {
-  const stats = [
-    { number: '300K+', label: 'Engaged Followers', gradient: 'from-[#D4AF37] to-[#F3E5AB]' },
-    { number: '1000+', label: 'Brand Partnerships', gradient: 'from-[#F3E5AB] to-[#D4AF37]' },
-    { number: 'High', label: 'Engagement Rate', gradient: 'from-[#D4AF37] to-[#F3E5AB]' },
+type AboutStats = {
+  followersCount: string;
+  followersLabel: string;
+  partnershipsCount: string;
+  partnershipsLabel: string;
+  engagementValue: string;
+  engagementLabel: string;
+};
+
+export function AboutSection({ stats }: { stats: AboutStats }) {
+  const statItems = [
+    { number: stats.followersCount, label: stats.followersLabel, gradient: 'from-[#D4AF37] to-[#F3E5AB]' },
+    { number: stats.partnershipsCount, label: stats.partnershipsLabel, gradient: 'from-[#F3E5AB] to-[#D4AF37]' },
+    { number: stats.engagementValue, label: stats.engagementLabel, gradient: 'from-[#D4AF37] to-[#F3E5AB]' },
   ];
 
   return (
@@ -38,7 +47,7 @@ export function AboutSection() {
               </p>
               
               <p>
-                With over <span className="text-white font-semibold">300,000 highly engaged followers</span> and partnerships with <span className="text-white font-semibold">1000+ global brands</span>, I specialize in crafting compelling UGC that resonates across multiple niches—from tech and beauty to lifestyle and wellness.
+                With over <span className="text-white font-semibold">{stats.followersCount} highly {stats.followersLabel.toLowerCase()}</span> and partnerships with <span className="text-white font-semibold">{stats.partnershipsCount} global brands</span>, I specialize in crafting compelling UGC that resonates across multiple niches—from tech and beauty to lifestyle and wellness.
               </p>
 
               <p className="text-[#F3E5AB] italic">
@@ -48,7 +57,7 @@ export function AboutSection() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-6 pt-8">
-              {stats.map((stat, index) => (
+              {statItems.map((stat, index) => (
                 <div 
                   key={index}
                   className="relative group"

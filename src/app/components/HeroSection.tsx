@@ -1,6 +1,11 @@
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
-export function HeroSection({ onCollaborateClick }: { onCollaborateClick: () => void }) {
+type HeroStats = {
+  followersCount: string;
+  followersLabel: string;
+};
+
+export function HeroSection({ onCollaborateClick, stats }: { onCollaborateClick: () => void; stats: HeroStats }) {
   const brandLogos = [
     { name: 'Sephora', width: 'w-20' },
     { name: 'TCL', width: 'w-16' },
@@ -40,7 +45,7 @@ export function HeroSection({ onCollaborateClick }: { onCollaborateClick: () => 
               <p className="text-lg md:text-xl text-gray-300 max-w-xl">
                 <span className="text-[#D4AF37] font-semibold">Rachna Panday</span> | UGC Content Creator & Influencer
                 <br />
-                <span className="text-gray-400">300K+ Highly Engaged Followers</span>
+                <span className="text-gray-400">{stats.followersCount} {stats.followersLabel}</span>
               </p>
             </div>
 

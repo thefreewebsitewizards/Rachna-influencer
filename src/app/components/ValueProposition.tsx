@@ -1,6 +1,11 @@
 import { Heart, Video, Globe, TrendingUp } from 'lucide-react';
 
-export function ValueProposition() {
+type ValueStats = {
+  followersCount: string;
+  followersLabel: string;
+};
+
+export function ValueProposition({ stats }: { stats: ValueStats }) {
   const values = [
     {
       icon: Heart,
@@ -15,7 +20,7 @@ export function ValueProposition() {
     {
       icon: Globe,
       title: 'Diverse Reach',
-      description: 'Access to 300K+ engaged followers across multiple demographics and interest groups',
+      description: `Access to ${stats.followersCount} ${stats.followersLabel.toLowerCase()} across multiple demographics and interest groups`,
     },
     {
       icon: TrendingUp,
